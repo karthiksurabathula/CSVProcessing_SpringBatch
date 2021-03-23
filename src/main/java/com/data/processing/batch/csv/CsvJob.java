@@ -10,6 +10,8 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
+import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -21,17 +23,16 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 import com.data.processing.batch.csv.model.CsvDataModel;
 import com.data.processing.batch.csv.model.CsvDataOutput;
-import com.data.processing.batch.csv.persistance.fileTracker.FileTracker;
-import com.data.processing.batch.csv.persistance.fileTracker.FileTrackerRepository;
 
 @Configuration
 public class CsvJob {
@@ -44,17 +45,12 @@ public class CsvJob {
 	private int chunkSize;
 
 	@Autowired
-	private FileTrackerRepository fileTrackerRepository;
-	
-	@Autowired
 	JobBuilderFactory jobBuilderFactory;
 	@Autowired
 	StepBuilderFactory stepBuilderFactory;
 
 	@Autowired
 	ResourceLoader resourceLoader;
-	@Autowired
-	private ApplicationContext applicationContext;
 
 	@Autowired
 	StepBuilderFactory stepBuilder;
@@ -70,66 +66,27 @@ public class CsvJob {
 	ItemReader<CsvDataModel> itemReaderRest;
 
 	/*
-	 * Batch
-	 
-	@Bean
-	@Qualifier("csvJobBatch")
-	public Job createCSVJob() throws IOException {
-		return jobBuilderFactory.get("csv-batch-processor-batch").incrementer(new RunIdIncrementer())
-				.flow(csvProcessorStep()).end().build();
-	}
-
-	@Bean
-	public Step csvProcessorStep() throws IOException {
-		return stepBuilder.get("csv-file-load-and-validate-batch").<CsvDataModel, CsvDataOutput>chunk(chunkSize)
-				.reader(multiResourceItemReader()).processor(itemProcessor).writer(itemWriter).build();
-	}
-
-	@Bean
-	@StepScope
-	public MultiResourceItemReader<CsvDataModel> multiResourceItemReader() {
-		MultiResourceItemReader<CsvDataModel> resourceItemReader = new MultiResourceItemReader<CsvDataModel>();
-		resourceItemReader.setResources(getResources());
-		resourceItemReader.setDelegate(itemReader());
-		resourceItemReader.setSaveState(true);
-		return resourceItemReader;
-	}
-
-	@Bean
-	@StepScope
-	public FlatFileItemReader<CsvDataModel> itemReader() {
-		FlatFileItemReader<CsvDataModel> flatFileItemReader = new FlatFileItemReader<>();
-		flatFileItemReader.setName("csv-reader-batch");
-		flatFileItemReader.setLinesToSkip(1);
-		flatFileItemReader.setLineMapper(lineMapper());
-		return flatFileItemReader;
-	}
-	 */
-	
-	/*
 	 * Rest
 	 */
 	@Bean
-	@Qualifier("csvJobRest")
-	public Job createCSVJobRest() throws IOException {
-		return jobBuilderFactory.get("csv-batch-processor-rest").incrementer(new RunIdIncrementer())
-				.flow(restCsvProcessorStep()).end().build();
+	@Qualifier("csvJobRestSingleThreaded")
+	public Job createCSVJobRest(Step myStep) throws IOException {
+		return jobBuilderFactory.get("csv-batch-processor-rest-single").validator(null)
+				.incrementer(new RunIdIncrementer()).flow(restCsvProcessorStep()).end().build();
 	}
 
 	@Bean
 	@Qualifier("csvRestProcessor")
 	public Step restCsvProcessorStep() throws IOException {
 		return stepBuilder.get("csv-file-load-and-validate-rest").<CsvDataModel, CsvDataOutput>chunk(chunkSize)
-				.reader(itemReaderRest).processor(itemProcessor).writer(itemWriter).faultTolerant().skipLimit(0).skip(Exception.class).build();
+				.reader(itemReaderRest).processor(itemProcessor).writer(itemWriter).build();
 	}
 
 	@Bean
 	@StepScope
 	@Qualifier("csvRestItemReader")
 	public FlatFileItemReader<CsvDataModel> restItemReader(@Value("#{jobParameters[filename]}") String filename) {
-
-		logger.info("Processing "+filename);
-		
+		logger.info("Processing " + filename);
 		FlatFileItemReader<CsvDataModel> flatFileItemReader = new FlatFileItemReader<>();
 		flatFileItemReader.setName("csv-reader-rest");
 		flatFileItemReader.setResource(new FileSystemResource(inputFolder + "/" + filename));
@@ -137,10 +94,6 @@ public class CsvJob {
 		flatFileItemReader.setLineMapper(lineMapper());
 		return flatFileItemReader;
 	}
-
-	/*
-	 * Common
-	 */
 
 	@Bean
 	@StepScope
@@ -160,23 +113,6 @@ public class CsvJob {
 		defaultLineMapper.setFieldSetMapper(fieldSetMapper);
 
 		return defaultLineMapper;
-	}
-
-	public Resource[] getResources() {
-
-		Resource[] resources = null;
-		try {
-			resources = applicationContext.getResources("file:" + inputFolder + "/*.csv");
-//			for (int i = 0; i < resources.length; i++) {
-//				Resource a = resources[i];
-//				fileTrackerRepository.saveAndFlush(new FileTracker());
-//				
-//			}
-		} catch (IOException ex) {
-			logger.error("" + ex);
-		}
-
-		return resources;
 	}
 
 }

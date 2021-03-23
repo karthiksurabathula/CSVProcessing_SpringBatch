@@ -1,4 +1,4 @@
-package com.data.processing.batch.csv.service;
+package com.data.processing.service;
 
 import java.util.Date;
 
@@ -21,10 +21,10 @@ public class JobService {
 	JobLauncher jobLauncher;
 
 	@Autowired
-	@Qualifier("csvJobRest")
+	@Qualifier("csvJobRestSingleThreaded")
 	Job job;
 
-	public JobExecution job(String filename) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+	public JobExecution csvJob(String filename) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
 		JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
 		jobParametersBuilder.addDate("date", new Date());
 		jobParametersBuilder.addString("filename", filename);

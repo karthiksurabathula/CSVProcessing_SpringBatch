@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.data.processing.batch.csv.service.JobService;
+import com.data.processing.service.JobService;
 
 @RestController
 public class JobController {
@@ -20,7 +20,7 @@ public class JobController {
     
     @GetMapping(path = "/load")
     public BatchStatus loadFile(@RequestParam String filename) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
-    	return jobsvc.job(filename).getStatus();
+    	return jobsvc.csvJob(filename).getStatus();
     }
 	
 
