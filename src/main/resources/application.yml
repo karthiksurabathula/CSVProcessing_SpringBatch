@@ -1,0 +1,38 @@
+spring:
+  h2:
+    console:
+      enabled: true
+      path: /h2
+      settings:
+        trace: false
+        web-allow-others: true
+  batch:
+    initialize-schema: always
+    job:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:tempdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    org.springframework: error
+    
+batch:
+  csv:
+    inputFolder: data/input
+    chunkSize: 1000
+    outputFolder: data/output
+    outputPrefix: _output
+    validation:
+      dateFormat: "M/d/yyyy"
+      checkCustomerId_regex: "[0-9]{6}"
+      checkTransaction_Id_regex: "[a-zA-Z0-9]{16}"
+      portifolio_Id_regex: "[A-Za-z]{3}-[0-9]{3}-[0-9]{2}-[0-9]{2}"
+      email_Address_regex: "^[a-zA-Z]+([0-9]?)+[._-][a-zA-Z]+@\\W*((?i)(lseg|refinitiv)(?-i))\\W*.\\W*((?i)(com|net|eu)(?-i))\\W*"
+      account_types: Equity Demat,Derivatives Trading,Commodity Demat,Commodity Trading,Discount Broking,Full-service Trading
+    
