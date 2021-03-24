@@ -45,7 +45,7 @@ public class FileMerge implements Tasklet {
 	@SuppressWarnings("deprecation")
 	@Override
 	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-		logger.info("File Merge process started" + filePath);
+		logger.info("File Merge process started : " + filePath);
 
 		ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 		Resource[] resources = resolver.getResources(
@@ -67,7 +67,7 @@ public class FileMerge implements Tasklet {
 		}
 
 		
-		logger.info("File Merge process completed" + filePath);
+		logger.info("File Merge process completed : " + filePath);
 		return RepeatStatus.FINISHED;
 	}
 }

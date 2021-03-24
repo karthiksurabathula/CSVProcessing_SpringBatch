@@ -113,7 +113,7 @@ public class CsvJob {
 		resources = resolver.getResources(
 				"file:" + inputFolder + "/split/" + filePath + "/" + resourceUtil.getFileName(filename) + "*.split");
 		partitioner.setResources(resources);
-		partitioner.partition(Runtime.getRuntime().availableProcessors());
+		partitioner.partition(Runtime.getRuntime().availableProcessors()*2);
 		return partitioner;
 	}
 

@@ -13,6 +13,7 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,13 +32,14 @@ public class JobService {
 
 	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 
+	@Async
 	public JobExecution csvJob(String filename) throws JobExecutionAlreadyRunningException, JobRestartException,
 			JobInstanceAlreadyCompleteException, JobParametersInvalidException {
 		Date date = new Date();
 		JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
 		jobParametersBuilder.addDate("date", new Date());
 		jobParametersBuilder.addString("filename", filename);
-		jobParametersBuilder.addString("folder", sdf.format(date).toString());
+		jobParametersBuilder.addString("folder", sdf.format(date).toString()+((int) (Math.random()*1000)));
 		JobExecution jobExecution = jobLauncher.run(csvJobMulti, jobParametersBuilder.toJobParameters());
 		return jobExecution;
 	}

@@ -35,10 +35,10 @@ public class FileCleanUp  implements Tasklet{
 
 	@Override
 	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-		logger.info("clean up task started for job folder" + filePath);
+		logger.info("clean up task started for job folder : " + filePath);
 		resourceUtil.deleteFolder(inputFolder + "/split/" + filePath);
 		resourceUtil.deleteFolder(outputPath + "/split/" +filePath );
-		logger.info("clean up task completed for job folder" + filePath);
+		logger.info("clean up task completed for job folder : " + filePath);
 		return RepeatStatus.FINISHED;
 	}
 
