@@ -18,7 +18,8 @@ public class CsvProcessor implements ItemProcessor<CsvDataModel, CsvDataOutput> 
 
 	private static final Logger logger = LoggerFactory.getLogger(CsvProcessor.class);
 
-	@Value("#{jobParameters[filename]}")
+//	@Value("#{jobParameters[filename]}")
+	@Value("#{stepExecutionContext['fileName']}")
 	String filename;
 
 	@Autowired

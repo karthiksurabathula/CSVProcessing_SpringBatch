@@ -25,19 +25,28 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.task.TaskExecutor;
 
+import com.data.processing.batch.FileCleanUp;
+import com.data.processing.batch.FileMerge;
+import com.data.processing.batch.FileSplitter;
 import com.data.processing.batch.csv.model.CsvDataModel;
 import com.data.processing.batch.csv.model.CsvDataOutput;
+import com.data.processing.util.ResourceUtil;
 
 @Configuration
 public class CsvJob {
 
 	private static final Logger logger = LoggerFactory.getLogger(CsvJob.class);
+
+	@Autowired
+	private ResourceUtil resourceUtil;
 
 	@Value("${batch.csv.inputFolder:data/input}")
 	private String inputFolder;
@@ -65,8 +74,100 @@ public class CsvJob {
 	@Qualifier("csvRestItemReader")
 	ItemReader<CsvDataModel> itemReaderRest;
 
+	@Autowired
+	@Qualifier("partitioner")
+	Partitioner partitioner;
+	@Autowired
+	@Qualifier("csvRestItemReaderMulti")
+	ItemReader<CsvDataModel> itemReaderRestMulti;
+	@Autowired
+	FileSplitter fileSplitter;
+	@Autowired
+	FileCleanUp fileCleanup;
+	@Autowired
+	FileMerge fileMerge;
+
+	@Autowired
+	@Qualifier("taskExecutor")
+	TaskExecutor taskExecutor;
+
 	/*
-	 * Rest
+	 * Rest Multithreaded
+	 */
+
+	@Bean
+	@Qualifier("csvJobRestMultiThreaded")
+	public Job createCSVJobRestMulti() throws IOException {
+		return jobBuilderFactory.get("csv-batch-processor-rest-multi").incrementer(new RunIdIncrementer())
+				.flow(FileSplitter()).next(masterStep()).next(FileMerge()).next(FileCleanup()).end().build();
+	}
+
+	@Bean("partitioner")
+	@StepScope
+	public Partitioner partitioner(@Value("#{jobParameters[filename]}") String filename,
+			@Value("#{jobParameters[folder]}") String filePath) throws IOException {
+		logger.info("In Partitioner");
+		MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+		ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+		Resource[] resources = null;
+		resources = resolver.getResources(
+				"file:" + inputFolder + "/split/" + filePath + "/" + resourceUtil.getFileName(filename) + "*.split");
+		partitioner.setResources(resources);
+		partitioner.partition(Runtime.getRuntime().availableProcessors());
+		return partitioner;
+	}
+
+	@Bean
+	@Qualifier("masterStep")
+	public Step masterStep() throws IOException {
+		return stepBuilderFactory.get("csv-batch-master").partitioner("step1", partitioner)
+				.step(restCsvProcessorStepMulti()).taskExecutor(taskExecutor).build();
+	}
+
+	@Bean
+	@Qualifier("fileSplitterStep")
+	protected Step FileSplitter() {
+		return stepBuilder.get("fileSplitter").tasklet(fileSplitter).build();
+	}
+	
+	@Bean
+	@Qualifier("fileMerge")
+	protected Step FileMerge() {
+		return stepBuilder.get("fileMerge").tasklet(fileMerge).build();
+	}
+
+	@Bean
+	@Qualifier("fileCleanup")
+	protected Step FileCleanup() {
+		return stepBuilder.get("fileCleanup").tasklet(fileCleanup).build();
+	}
+
+	@Bean
+	@Qualifier("csvRestProcessorMulti")
+	public Step restCsvProcessorStepMulti() throws IOException {
+		return stepBuilder.get("csv-file-load-and-validate-rest").<CsvDataModel, CsvDataOutput>chunk(chunkSize)
+				.reader(itemReaderRestMulti).processor(itemProcessor).writer(itemWriter).build();
+	}
+
+	@Bean
+	@StepScope
+	@Qualifier("csvRestItemReaderMulti")
+	public FlatFileItemReader<CsvDataModel> restItemReaderMulti(
+			@Value("#{stepExecutionContext['fileName']}") String filename) {
+
+		logger.info("Processing Multi" + filename);
+		FlatFileItemReader<CsvDataModel> flatFileItemReader = new FlatFileItemReader<>();
+		flatFileItemReader.setName("csv-reader-rest-multi");
+		flatFileItemReader.setResource(new PathMatchingResourcePatternResolver().getResource(filename));
+//		flatFileItemReader.setLinesToSkip(1);
+		flatFileItemReader.setSaveState(false);
+		flatFileItemReader.setLineMapper(lineMapper());
+		return flatFileItemReader;
+
+	}
+
+	/*
+	 * Rest Single Threaded
 	 */
 	@Bean
 	@Qualifier("csvJobRestSingleThreaded")
@@ -75,6 +176,7 @@ public class CsvJob {
 				.incrementer(new RunIdIncrementer()).flow(restCsvProcessorStep()).end().build();
 	}
 
+	@Primary
 	@Bean
 	@Qualifier("csvRestProcessor")
 	public Step restCsvProcessorStep() throws IOException {
@@ -82,6 +184,7 @@ public class CsvJob {
 				.reader(itemReaderRest).processor(itemProcessor).writer(itemWriter).build();
 	}
 
+	@Primary
 	@Bean
 	@StepScope
 	@Qualifier("csvRestItemReader")

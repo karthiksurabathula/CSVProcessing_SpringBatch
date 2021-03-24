@@ -1,5 +1,6 @@
 package com.data.processing.service;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.springframework.batch.core.Job;
@@ -24,11 +25,20 @@ public class JobService {
 	@Qualifier("csvJobRestSingleThreaded")
 	Job job;
 
-	public JobExecution csvJob(String filename) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+	@Autowired
+	@Qualifier("csvJobRestMultiThreaded")
+	Job csvJobMulti;
+
+	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+
+	public JobExecution csvJob(String filename) throws JobExecutionAlreadyRunningException, JobRestartException,
+			JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+		Date date = new Date();
 		JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
 		jobParametersBuilder.addDate("date", new Date());
 		jobParametersBuilder.addString("filename", filename);
-		JobExecution jobExecution = jobLauncher.run(job, jobParametersBuilder.toJobParameters());
+		jobParametersBuilder.addString("folder", sdf.format(date).toString());
+		JobExecution jobExecution = jobLauncher.run(csvJobMulti, jobParametersBuilder.toJobParameters());
 		return jobExecution;
 	}
 

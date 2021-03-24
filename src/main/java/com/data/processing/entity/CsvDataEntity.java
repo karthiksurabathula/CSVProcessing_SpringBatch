@@ -21,7 +21,7 @@ public class CsvDataEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long id;
+	private int id;
 	private String input;
 	private boolean valid;
 	private String checksum;

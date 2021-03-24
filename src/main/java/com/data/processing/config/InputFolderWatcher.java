@@ -10,6 +10,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.Date;
 
 import javax.annotation.PostConstruct;
 
@@ -20,6 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
+import com.data.processing.entity.FileTracker;
+import com.data.processing.repository.FileTrackerRepository;
+import com.data.processing.service.JobService;
 import com.data.processing.util.ResourceUtil;
 
 @Component
@@ -30,6 +34,10 @@ public class InputFolderWatcher {
 
 	@Autowired
 	private ResourceUtil resourceUtil;
+	@Autowired
+	private JobService csvJobService;
+	@Autowired
+	private FileTrackerRepository fileTrackerRepo;
 
 	private static final Logger logger = LoggerFactory.getLogger(InputFolderWatcher.class);
 
@@ -38,7 +46,7 @@ public class InputFolderWatcher {
 
 	@PostConstruct
 	public void init() {
-		logger.info("Monitor startup configuration file");
+		logger.info("Monitor Input Folder for New CSV files");
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
 			path = Paths.get(new FileSystemResource(inputFolder).getPath());
@@ -84,7 +92,9 @@ public class InputFolderWatcher {
 						if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
 							String editFileName = event.context().toString();
 							if (resourceUtil.getFileExtension(editFileName).equals("csv")) {
-								logger.info("New CSV file detected : " + path + "/" + editFileName);
+								logger.info("New CSV file detected : " + path + "/" + editFileName);	
+								fileTrackerRepo.saveAndFlush(new FileTracker(0, editFileName, new Date(),null,null,"tracked",false));
+								csvJobService.csvJob(editFileName);
 							}
 						}
 					}

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.data.processing.service.JobService;
 
-@RestController
+//@RestController
 public class JobController {
 	
   @Autowired

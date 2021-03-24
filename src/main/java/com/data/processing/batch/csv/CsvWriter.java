@@ -23,6 +23,10 @@ public class CsvWriter implements ItemWriter<CsvDataOutput> {
 	private String outputPath;
 	@Value("${batch.csv.prefix:_output}")
 	private String outputPrefix;
+	 @Value("#{jobParameters[folder]}") 
+	 String filePath;
+	 @Value("#{jobParameters[filename]}") 
+	 String inputFilename;
 
 	@Autowired
 	private CsvDataRepository csvDataRepo;
@@ -35,11 +39,11 @@ public class CsvWriter implements ItemWriter<CsvDataOutput> {
 		String outputFileName = resourceUtil.getFileName(csvOutput.get(0).getFileName()) + outputPrefix + "."
 				+ resourceUtil.getFileExtension(csvOutput.get(0).getFileName());
 
-		File file = new File(outputPath + "/" + outputFileName);
+		File file = new File(outputPath + "/split/" +filePath + "/" + outputFileName);
 
 		for (int i = 0; i < csvOutput.size(); i++) {
 			csvDataRepo.saveAndFlush(new CsvDataEntity(0, csvOutput.get(i).getInput(), csvOutput.get(i).isValid(),
-					csvOutput.get(i).getSha512Checksum(), csvOutput.get(i).getFileName()));
+					csvOutput.get(i).getSha512Checksum(), inputFilename));
 
 			if (csvOutput.get(i).isValid()) {
 				FileUtils.writeStringToFile(file, csvOutput.get(i).getInput() + "\n", "UTF-8", true);

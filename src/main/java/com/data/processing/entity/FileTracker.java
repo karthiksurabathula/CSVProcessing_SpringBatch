@@ -8,6 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.sun.istack.NotNull;
 import com.sun.istack.Nullable;
 
 import lombok.AllArgsConstructor;
@@ -25,14 +26,18 @@ public class FileTracker {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long id;
+	private int id;
+	@NotNull
 	private String filename;
-	private String tarcked_date;
+	@NotNull
+	private Date tarcked_date;
 	@Nullable
 	private Date process_start_date;
 	@Nullable
 	private Date process_end_date;
+	@NotNull
 	private String status;
+	@NotNull
 	private boolean completed;
 
 }
