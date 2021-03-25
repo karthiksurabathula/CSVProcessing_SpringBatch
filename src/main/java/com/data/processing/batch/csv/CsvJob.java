@@ -233,7 +233,6 @@ public class CsvJob {
 	@Bean
 	@Qualifier("csvUniqeExtracterJob")
 	public Job csvUniqeExtracterJob() throws IOException {
-		logger.info("Uniqe extactor invoked");
 		return jobBuilderFactory.get("csv-unique-extractor").incrementer(new RunIdIncrementer())
 				.flow(csvUniqueCleanUp())
 				.next(csvUniqueExtracter())
