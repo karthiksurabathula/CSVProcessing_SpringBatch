@@ -11,8 +11,8 @@ spring:
     job:
       enabled: false
   datasource:
-    url: jdbc:h2:file:./db/tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
-    #url: jdbc:h2:mem:tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
+    #url: jdbc:h2:file:./db/tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password: 1234

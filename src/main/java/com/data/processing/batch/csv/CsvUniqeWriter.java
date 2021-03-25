@@ -48,11 +48,11 @@ public class CsvUniqeWriter implements Tasklet {
 		String[] filesString = inputFiles.split(",");
 		List<String> files = Arrays.asList(filesString);
 		
-		logger.info("File :" + inputFiles);
+		logger.info("Input Files to extract unique data:" + inputFiles);
 		
 		for(int j=0;j<files.size();j++) {
 			
-			logger.info("File :" + files.get(j));
+			logger.info("Extracting unique data for :" + files.get(j));
 			
 			int page = 0;
 			while (true) {
@@ -72,8 +72,6 @@ public class CsvUniqeWriter implements Tasklet {
 				page = page + 1;
 			}	
 		}
-		
-		
 		
 		return RepeatStatus.FINISHED;
 	}

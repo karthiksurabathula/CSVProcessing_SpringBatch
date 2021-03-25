@@ -63,7 +63,7 @@ public class FileSplitter implements Tasklet {
 		try (Stream<String> stream = Files.lines(path, StandardCharsets.UTF_8)) {
 
 			// partitions
-			long[] partitions = split(stream.count(), Runtime.getRuntime().availableProcessors() * 4);
+			long[] partitions = split(stream.count(), Runtime.getRuntime().availableProcessors());
 
 			// reader
 			LineIterator it = FileUtils.lineIterator(new File(inputFolder + "/" + filename), "UTF-8");
