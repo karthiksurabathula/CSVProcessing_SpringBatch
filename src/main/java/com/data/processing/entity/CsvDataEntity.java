@@ -4,6 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "csvInput")
+@Table(name = "csvInput", indexes = { @Index(name = "SECONDARY_CSVData", columnList = "checksum,filename") })
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter

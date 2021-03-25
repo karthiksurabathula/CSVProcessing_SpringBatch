@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -18,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "fileTracker")
+@Table(name = "fileTracker", indexes = { @Index(name = "SECONDARY_FileTracker", columnList = "filename") })
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -27,7 +28,6 @@ import lombok.Setter;
 public class FileTracker {
 
 	@Id
-//	@GeneratedValue(strategy = GenerationType.AUTO)
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator="PRIVATE_SEQ_FILETRACKER")
 	private int id;
 	@NotNull
