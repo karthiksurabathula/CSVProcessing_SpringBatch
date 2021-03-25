@@ -10,8 +10,8 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.batch</groupId>
-	<artifactId>csv</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>csv-data-processor</artifactId>
+	<version>0.0.1</version>
 	<name>csv</name>
 	<description>CSV Batch Processor</description>
 	<properties>
