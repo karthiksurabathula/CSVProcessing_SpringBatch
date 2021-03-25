@@ -36,6 +36,7 @@ import org.springframework.core.task.TaskExecutor;
 import com.data.processing.batch.FileCleanUp;
 import com.data.processing.batch.FileMerge;
 import com.data.processing.batch.FileSplitter;
+import com.data.processing.batch.JobExecListeners;
 import com.data.processing.batch.csv.model.CsvDataModel;
 import com.data.processing.batch.csv.model.CsvDataOutput;
 import com.data.processing.util.ResourceUtil;
@@ -52,6 +53,8 @@ public class CsvJob {
 	private String inputFolder;
 	@Value("${batch.csv.chunkSize:100}")
 	private int chunkSize;
+	@Value("${batch.csv.threadsMultiple:4}")
+	private int threadMultiple;
 
 	@Autowired
 	JobBuilderFactory jobBuilderFactory;
@@ -86,19 +89,25 @@ public class CsvJob {
 	FileCleanUp fileCleanup;
 	@Autowired
 	FileMerge fileMerge;
+	@Autowired
+	CsvUniqeWriter csvUniquWriter;
+	@Autowired
+	CsvUniqueCleanup csvUniqueCleanup;
 
 	@Autowired
 	@Qualifier("taskExecutor")
 	TaskExecutor taskExecutor;
+	
+	@Autowired
+	JobExecListeners jobExcListner;
 
 	/*
 	 * Rest Multithreaded
 	 */
-
 	@Bean
 	@Qualifier("csvJobRestMultiThreaded")
 	public Job createCSVJobRestMulti() throws IOException {
-		return jobBuilderFactory.get("csv-batch-processor-rest-multi").incrementer(new RunIdIncrementer())
+		return jobBuilderFactory.get("csv-batch-processor-rest-multi").incrementer(new RunIdIncrementer()).listener(jobExcListner)
 				.flow(FileSplitter()).next(masterStep()).next(FileMerge()).next(FileCleanup()).end().build();
 	}
 
@@ -113,7 +122,7 @@ public class CsvJob {
 		resources = resolver.getResources(
 				"file:" + inputFolder + "/split/" + filePath + "/" + resourceUtil.getFileName(filename) + "*.split");
 		partitioner.setResources(resources);
-		partitioner.partition(Runtime.getRuntime().availableProcessors()*2);
+		partitioner.partition(Runtime.getRuntime().availableProcessors()*threadMultiple);
 		return partitioner;
 	}
 
@@ -216,6 +225,35 @@ public class CsvJob {
 		defaultLineMapper.setFieldSetMapper(fieldSetMapper);
 
 		return defaultLineMapper;
+	}
+	
+	/*
+	 * CSV Uniq Extractor
+	 */
+	@Bean
+	@Qualifier("csvUniqeExtracterJob")
+	public Job csvUniqeExtracterJob() throws IOException {
+		logger.info("Uniqe extactor invoked");
+		return jobBuilderFactory.get("csv-unique-extractor").incrementer(new RunIdIncrementer())
+				.flow(csvUniqueCleanUp())
+				.next(csvUniqueExtracter())
+				.end().build();
+	}
+	
+	@Bean
+	@Qualifier("csvUniqueCleanup")
+	public Step csvUniqueCleanUp() {
+		return stepBuilder.get("csv-unique-cleanup")
+				.tasklet(csvUniqueCleanup)
+				.build();
+	}
+	
+	@Bean
+	@Qualifier("csvUniqueExtracter")
+	public Step csvUniqueExtracter() {
+		return stepBuilder.get("csv-unique-extractor")
+				.tasklet(csvUniquWriter)
+				.build();
 	}
 
 }

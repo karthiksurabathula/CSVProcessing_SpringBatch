@@ -1,5 +1,6 @@
 package com.data.processing.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
@@ -49,7 +50,14 @@ public class InputFolderWatcher {
 		logger.info("Monitor Input Folder for New CSV files");
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
+			
+			//Check and create Input directory if dosenot exist
+			File dir = new File(inputFolder);
+			if (!dir.exists())
+				dir.mkdirs();
+
 			path = Paths.get(new FileSystemResource(inputFolder).getPath());
+
 			path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
 		} catch (NoSuchFileException fe) {
 			logger.error("Input Folder not found", fe);
@@ -92,9 +100,18 @@ public class InputFolderWatcher {
 						if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
 							String editFileName = event.context().toString();
 							if (resourceUtil.getFileExtension(editFileName).equals("csv")) {
-								logger.info("New CSV file detected : " + path + "/" + editFileName);	
-								fileTrackerRepo.saveAndFlush(new FileTracker(0, editFileName, new Date(),null,null,"tracked",false));
-								csvJobService.csvJob(editFileName);
+								logger.info("New CSV file detected : " + path + "/" + editFileName);
+								
+								FileTracker fileTracker = fileTrackerRepo.findByFilename(editFileName); 
+								
+								if(fileTracker==null) {
+									fileTrackerRepo.saveAndFlush(
+											new FileTracker(0, editFileName, new Date(), null, null, "tracked", false, new Date()));
+									csvJobService.csvJob(editFileName);	
+								} else {
+									logger.info("Job not executed, File processed on :" + fileTracker.getProcess_end_date());
+								}
+								
 							}
 						}
 					}

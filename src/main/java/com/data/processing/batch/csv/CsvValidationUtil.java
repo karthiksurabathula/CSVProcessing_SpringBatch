@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,14 +18,23 @@ public class CsvValidationUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(CsvValidationUtil.class);
 
-	String checkCustomerId_regex = "[0-9]{6}";
-	String checkTransaction_Id_regex = "[a-zA-Z0-9]{16}";
-	String portfolio_Id_regex = "[A-Za-z]{3}-[0-9]{3}-[0-9]{2}-[0-9]{2}";
-	String email_Address_regex = "^[a-zA-Z]+([0-9]?)+[._-][a-zA-Z]+@\\W*((?i)(lseg|refinitiv)(?-i))\\W*.\\W*((?i)(com|net|eu)(?-i))\\W*";
-	String[] account_types = { "Equity Demat", "Derivatives Trading", "Commodity Demat", "Commodity Trading",
-			"Discount Broking", "Full-service Trading" };
+	@Value("${batch.csv.validation.checkCustomerId_regex}")
+	String checkCustomerId_regex; // = "[0-9]{6}";
+	@Value("${batch.csv.validation.checkTransaction_Id_regex}")
+	String checkTransaction_Id_regex;// = "[a-zA-Z0-9]{16}";
+	@Value("${batch.csv.validation.portifolio_Id_regex}")
+	String portfolio_Id_regex; // = "[A-Za-z]{3}-[0-9]{3}-[0-9]{2}-[0-9]{2}";
+	@Value("${batch.csv.validation.email_Address_regex}")
+	String email_Address_regex; // = "^[a-zA-Z]+([0-9]?)+[._-][a-zA-Z]+@\\W*((?i)(lseg|refinitiv)(?-i))\\W*.\\W*((?i)(com|net|eu)(?-i))\\W*";
+	@Value("${batch.csv.validation.account_types}")
+	String[] account_types; // = { "Equity Demat", "Derivatives Trading", "Commodity Demat", "Commodity Trading", "Discount Broking", "Full-service Trading" };
+	@Value("${batch.csv.validation.dateFormat}")
+	String dateFormatt;
+	@Value("${batch.csv.validation.years_valid}")
+	int[] years_valid;
+	@Value("${batch.csv.validation.months_valid}")
+	int[] month_valid;
 
-	DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("M/d/yyyy");
 
 	public boolean checkCustomerId(String customer_id) {
 		Pattern regexPattern = Pattern.compile(checkCustomerId_regex);
@@ -62,15 +72,21 @@ public class CsvValidationUtil {
 	}
 
 	public boolean checkDate(String date) {
+		DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(dateFormatt);
 		try {
 			LocalDate zdt = LocalDate.parse(date, dateFormat);
 			YearMonth ym = YearMonth.from(zdt);
 			int year = ym.getYear();
 			int month = ym.getMonthValue();
 
-			if ((year == 2007 || year == 2008 || year == 2009) && (month == 1 || month == 12)) {
+			if ((Arrays.stream(years_valid).anyMatch(i -> i == year))
+					&& (Arrays.stream(month_valid).anyMatch(i -> i == month))) {
 				return true;
 			}
+
+//			if ((year == 2007 || year == 2008 || year == 2009) && (month == 1 || month == 12)) {
+//				return true;
+//			}
 			return false;
 		} catch (Exception e) {
 			logger.debug(e.getMessage());

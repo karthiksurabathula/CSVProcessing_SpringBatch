@@ -8,7 +8,6 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.data.processing.service.JobService;
 
@@ -22,6 +21,13 @@ public class JobController {
     public BatchStatus loadFile(@RequestParam String filename) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
     	return jobsvc.csvJob(filename).getStatus();
     }
+    
+    @GetMapping(path = "/csvUnique")
+    public String createUnique() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException  {
+    	jobsvc.checkUniqueVlauesFromInput();
+    	return "Invoked";
+    }
+    
 	
 
 }

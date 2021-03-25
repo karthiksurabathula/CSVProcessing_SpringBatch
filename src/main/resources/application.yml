@@ -11,25 +11,42 @@ spring:
     job:
       enabled: false
   datasource:
-    url: jdbc:h2:mem:tempdb;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:file:./db/tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
+    #url: jdbc:h2:mem:tempdb;CACHE_SIZE=102400;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: password
+    password: 1234
+    oracleucp:
+      max-pool-size: 300
+      min-pool-size: 300
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
     
 logging:
   level:
     org.springframework: error
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type: TRACE
+
+custom:
+  taskExecutor:
+    corePoolSize: 100
+    maxPoolSize: 100
+    queueCapacity: 100000
     
 batch:
   csv:
+    threadMultiple: 4
     inputFolder: data/input
     chunkSize: 1000
     outputFolder: data/output
     outputPrefix: _output
     validation:
       dateFormat: "M/d/yyyy"
+      years_valid: 2007,2008,2009
+      months_valid: 1,12
       checkCustomerId_regex: "[0-9]{6}"
       checkTransaction_Id_regex: "[a-zA-Z0-9]{16}"
       portifolio_Id_regex: "[A-Za-z]{3}-[0-9]{3}-[0-9]{2}-[0-9]{2}"

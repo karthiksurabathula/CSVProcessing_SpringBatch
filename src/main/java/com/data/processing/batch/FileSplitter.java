@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -20,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.data.processing.entity.FileTracker;
+import com.data.processing.repository.FileTrackerRepository;
 import com.data.processing.util.ResourceUtil;
 
 @Component
@@ -41,11 +44,19 @@ public class FileSplitter implements Tasklet {
 
 	@Autowired
 	private ResourceUtil resourceUtil;
+	@Autowired
+	private FileTrackerRepository fileTrackerRepo;
 	
 	@SuppressWarnings("deprecation")
 	@Override
 	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 
+		FileTracker fileTracker = fileTrackerRepo.findByFilename(filename);
+		fileTracker.setProcess_start_date(new Date());
+		fileTracker.setStatus("File Split process started");
+		fileTracker.setLastUpdateDate(new Date());
+		fileTrackerRepo.saveAndFlush(fileTracker);
+		
 		logger.info("file Split Process started for: " + filename);
 
 		Path path = Paths.get(inputFolder + "/" + filename);
@@ -60,14 +71,14 @@ public class FileSplitter implements Tasklet {
 				int filecount = 0;
 				long recordsCount = 0;
 				// write
-				String outputFileName = resourceUtil.getFileName(filename) + filecount + ".split";
+				String outputFileName = resourceUtil.getFileName(filename) + "_" + filecount + ".split";
 				File file = new File(inputFolder + "/split/" + filePath + "/" + outputFileName);
 
 				while (it.hasNext()) {
 					if (recordsCount == partitions[filecount]) {
 						filecount = filecount + 1;
 						recordsCount = 0;
-						outputFileName = resourceUtil.getFileName(filename) + filecount + ".split";
+						outputFileName = resourceUtil.getFileName(filename) + "_" + filecount + ".split";
 						file = new File(inputFolder + "/split/" + filePath + "/" + outputFileName);
 					}
 					FileUtils.writeStringToFile(file, it.nextLine() + "\n", "UTF-8", true);
@@ -78,6 +89,13 @@ public class FileSplitter implements Tasklet {
 			}
 		}
 		logger.info("file Split Process completed for: " + filename);
+		
+		fileTracker = fileTrackerRepo.findByFilename(filename);
+		fileTracker.setProcess_start_date(new Date());
+		//Setting it as the next step is processing
+		fileTracker.setStatus("Processing data");
+		fileTracker.setLastUpdateDate(new Date());
+		fileTrackerRepo.saveAndFlush(fileTracker);
 
 		return RepeatStatus.FINISHED;
 	}

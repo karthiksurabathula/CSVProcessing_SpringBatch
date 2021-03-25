@@ -24,7 +24,7 @@ public class FileCleanUp  implements Tasklet{
 	@Value("#{jobParameters[folder]}")
 	String filePath;
 
-	@Value("${batch.csv.inputFolder:data/input}")
+	@Value("${batch.csv.inputFolder:data/input}")	
 	private String inputFolder;
 
 	@Value("${batch.csv.outputFolder:data/output}")

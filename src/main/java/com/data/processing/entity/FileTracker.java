@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.sun.istack.NotNull;
@@ -22,10 +23,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @Setter
 @Getter
+@SequenceGenerator(name="PRIVATE_SEQ_FILETRACKER", sequenceName="private_sequence_filetracker")
 public class FileTracker {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+//	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator="PRIVATE_SEQ_FILETRACKER")
 	private int id;
 	@NotNull
 	private String filename;
@@ -39,5 +42,7 @@ public class FileTracker {
 	private String status;
 	@NotNull
 	private boolean completed;
+	@Nullable
+	private Date lastUpdateDate;
 
 }

@@ -20,6 +20,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 import com.data.processing.entity.FileTracker;
+import com.data.processing.repository.FileTrackerRepository;
 import com.data.processing.util.ResourceUtil;
 
 @Component
@@ -41,10 +42,19 @@ public class FileMerge implements Tasklet {
 	
 	@Autowired
 	private ResourceUtil resourceUtil;
+	@Autowired
+	private FileTrackerRepository fileTrackerRepo;
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+		
+		FileTracker fileTracker = fileTrackerRepo.findByFilename(filename);
+		fileTracker.setProcess_start_date(new Date());
+		fileTracker.setStatus("File Merge process started");
+		fileTracker.setLastUpdateDate(new Date());
+		fileTrackerRepo.saveAndFlush(fileTracker);
+		
 		logger.info("File Merge process started : " + filePath);
 
 		ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -66,6 +76,11 @@ public class FileMerge implements Tasklet {
 			
 		}
 
+		fileTracker = fileTrackerRepo.findByFilename(filename);
+		fileTracker.setProcess_start_date(new Date());
+		fileTracker.setStatus("File Merge process completed");
+		fileTracker.setLastUpdateDate(new Date());
+		fileTrackerRepo.saveAndFlush(fileTracker);
 		
 		logger.info("File Merge process completed : " + filePath);
 		return RepeatStatus.FINISHED;
