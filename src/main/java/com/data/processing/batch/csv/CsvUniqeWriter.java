@@ -71,7 +71,11 @@ public class CsvUniqeWriter implements Tasklet {
 				}
 				page = page + 1;
 			}	
+			
+			logger.info("Extracting unique data for :" + files.get(j) + "completed");
 		}
+		
+		
 		
 		return RepeatStatus.FINISHED;
 	}
